@@ -1,6 +1,5 @@
-import { useSyncExternalStore } from 'react';
 import { reduceState, type Action, type AppState } from './model';
-import { loadState, saveState, STORAGE_KEY, type StoragePort } from './persistence';
+import { loadState, saveState, type StoragePort } from './persistence';
 
 export interface StoreSnapshot { state: AppState; warning: string | null; unsaved: boolean }
 type Lock = <T>(callback: () => T) => Promise<T>;
@@ -15,7 +14,7 @@ export function createStore(storage: StoragePort, lock: Lock = async callback =>
     // Serialize this tab as well as tabs using the same origin's Web Lock.
     queue = queue.then(() => lock(() => {
       const stored = snapshot.unsaved ? null : loadState(storage);
-      const base = stored?.state ?? snapshot.state;
+      const base = stored && !stored.unavailable ? stored.state : snapshot.state;
       const next = reduceState(base, action, now());
       if (next === base) return;
       const warning = saveState(storage, next);
@@ -29,7 +28,7 @@ export function createStore(storage: StoragePort, lock: Lock = async callback =>
   function refresh() {
     if (snapshot.unsaved) return;
     const loaded = loadState(storage);
-    snapshot = { ...loaded, unsaved: false }; notify();
+    snapshot = loaded.unavailable ? { ...snapshot, warning: loaded.warning } : { ...loaded, unsaved: false }; notify();
   }
   function retry() {
     const warning = saveState(storage, snapshot.state);
@@ -41,14 +40,3 @@ export function createStore(storage: StoragePort, lock: Lock = async callback =>
     dispatch, refresh, retry,
   };
 }
-
-const storage: StoragePort = {
-  getItem: key => window.localStorage.getItem(key),
-  setItem: (key, value) => window.localStorage.setItem(key, value),
-};
-const lock: Lock = callback => navigator.locks ? navigator.locks.request('focusboard-state', callback) : Promise.resolve(callback());
-export const store = createStore(storage, lock);
-window.addEventListener('storage', event => {
-  if (event.key === STORAGE_KEY || event.key === null) { store.refresh(); void store.dispatch({ type: 'timer/tick' }); }
-});
-export const useStore = () => useSyncExternalStore(store.subscribe, store.getSnapshot);

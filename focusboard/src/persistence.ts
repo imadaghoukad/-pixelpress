@@ -28,7 +28,7 @@ function isTimer(value: unknown): value is Timer {
   if (value.status === 'running') return timestamp(value.endsAt) && value.remainingMs > 0;
   return value.endsAt === null && (value.status === 'complete' ? value.remainingMs === 0 : value.remainingMs > 0);
 }
-export interface LoadResult { state: AppState; warning: string | null }
+export interface LoadResult { state: AppState; warning: string | null; unavailable?: boolean }
 export function decodeState(raw: string | null): LoadResult {
   const state = initialState();
   if (raw === null) return { state, warning: null };
@@ -64,7 +64,7 @@ export function decodeState(raw: string | null): LoadResult {
 }
 export function loadState(storage: StoragePort): LoadResult {
   try { return decodeState(storage.getItem(STORAGE_KEY)); }
-  catch { return { state: initialState(), warning: 'Browser storage is unavailable. Changes may be lost when you close or reload this page.' }; }
+  catch { return { state: initialState(), unavailable: true, warning: 'Browser storage is unavailable. Changes may be lost when you close or reload this page.' }; }
 }
 export function saveState(storage: StoragePort, state: AppState): string | null {
   try { storage.setItem(STORAGE_KEY, JSON.stringify(state)); return null; }
