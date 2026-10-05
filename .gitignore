@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.netlify/
+out/
+test-results/
+playwright-report/
+coverage/
+artifacts/
+*.tsbuildinfo
+.env*.local
+.sites-runtime/
+.DS_Store

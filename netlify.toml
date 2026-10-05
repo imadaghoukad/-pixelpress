@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build"
+  publish = "out"
+
+[build.environment]
+  NODE_VERSION = "24"
+  # Pixelpress is a static export; image processing runs in the browser.
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"

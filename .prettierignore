@@ -1,0 +1,10 @@
+node_modules
+.next
+.netlify
+out
+test-results
+playwright-report
+package-lock.json
+tests/fixtures
+.sites-runtime
+next-env.d.ts
