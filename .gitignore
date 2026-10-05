@@ -10,3 +10,4 @@ artifacts/
 .env*.local
 .sites-runtime/
 .DS_Store
+.openai/
